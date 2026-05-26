@@ -4,75 +4,472 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DevOps Todo App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: "Segoe UI", sans-serif; background: #f0f4f8; display: flex; justify-content: center; padding: 2rem; }
-    .container { background: white; border-radius: 12px; padding: 2rem; width: 100%; max-width: 600px; box-shadow: 0 2px 16px rgba(0,0,0,.08); height: fit-content; }
-    h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: #1a1a2e; }
-    .add-form { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
-    .add-form input { flex: 1; padding: .6rem 1rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
-    .add-form button { padding: .6rem 1.2rem; background: #2E75B6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; }
-    .add-form button:hover { background: #1a5a99; }
-    .todo-item { display: flex; align-items: center; gap: .75rem; padding: .75rem; border-bottom: 1px solid #eee; }
-    .todo-item:last-child { border-bottom: none; }
-    .todo-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-    .todo-title { flex: 1; font-size: 1rem; }
-    .todo-title.done { text-decoration: line-through; color: #999; }
-    .delete-btn { background: #e53e3e; color: white; border: none; border-radius: 6px; padding: .3rem .7rem; cursor: pointer; font-size: .85rem; }
-    .delete-btn:hover { background: #c0392b; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.15);
+      --text: #e6edf3;
+      --text-muted: #7d8590;
+      --accent: #238636;
+      --accent-hover: #2ea043;
+      --accent-light: rgba(35,134,54,0.15);
+      --danger: #da3633;
+      --danger-hover: #f85149;
+      --danger-light: rgba(218,54,51,0.12);
+      --warn: #d29922;
+      --warn-light: rgba(210,153,34,0.12);
+      --blue: #1f6feb;
+      --blue-light: rgba(31,111,235,0.12);
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    body {
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 3rem 1rem;
+      color: var(--text);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+
+    .header-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--accent-light);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-hover);
+      font-size: 20px;
+    }
+
+    .header h1 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .header .subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 2px;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .stat-value.total { color: var(--text); }
+    .stat-value.done { color: var(--accent-hover); }
+    .stat-value.pending { color: var(--warn); }
+
+    .add-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 10px;
+    }
+
+    .add-section input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .add-section input:focus { border-color: var(--blue); }
+    .add-section input::placeholder { color: var(--text-muted); }
+
+    .btn-add {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 10px 18px;
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-add:hover { background: var(--accent-hover); }
+
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .todo-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: border-color 0.15s, transform 0.1s;
+      animation: slideIn 0.2s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .todo-item:hover { border-color: var(--border-hover); }
+    .todo-item.completed { opacity: 0.6; }
+
+    .checkbox-wrap {
+      position: relative;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .checkbox-wrap input[type="checkbox"] {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 1.5px solid var(--border-hover);
+      border-radius: 6px;
+      background: var(--surface2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .checkbox-wrap input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .checkbox-wrap input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 4px; left: 7px;
+      width: 5px; height: 9px;
+      border: 2px solid #fff;
+      border-top: none; border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .todo-title {
+      flex: 1;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .todo-title.done {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .edit-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 6px 10px;
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      outline: none;
+    }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.15s;
+      color: var(--text-muted);
+    }
+
+    .btn-icon:hover { color: var(--text); border-color: var(--border-hover); background: var(--surface2); }
+
+    .btn-icon.edit:hover { color: var(--blue); border-color: var(--blue); background: var(--blue-light); }
+    .btn-icon.save { color: var(--accent-hover); border-color: var(--accent); background: var(--accent-light); }
+    .btn-icon.cancel:hover { color: var(--text-muted); }
+    .btn-icon.delete:hover { color: var(--danger-hover); border-color: var(--danger); background: var(--danger-light); }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state i { font-size: 40px; margin-bottom: 12px; opacity: 0.4; display: block; }
+    .empty-state p { font-size: 0.9rem; }
+
+    .progress-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 99px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent-hover);
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    .loading { color: var(--text-muted); text-align: center; padding: 2rem; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📋 DevOps Todo List</h1>
-    <div class="add-form">
-      <input type="text" id="new-todo" placeholder="พิมพ์งานใหม่แล้วกด Enter" />
-      <button onclick="addTodo()">เพิ่ม</button>
+    <div class="header">
+      <div class="header-icon"><i class="ti ti-checkbox"></i></div>
+      <div>
+        <h1>DevOps Todo List</h1>
+        <div class="subtitle">task management / devops</div>
+      </div>
     </div>
-    <div id="todo-list">กำลังโหลด...</div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">ทั้งหมด</div>
+        <div class="stat-value total" id="stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">เสร็จแล้ว</div>
+        <div class="stat-value done" id="stat-done">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">รอดำเนินการ</div>
+        <div class="stat-value pending" id="stat-pending">0</div>
+      </div>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress" style="width: 0%"></div>
+    </div>
+
+    <div class="add-section">
+      <input type="text" id="new-todo" placeholder="พิมพ์งานใหม่แล้วกด Enter หรือคลิก เพิ่ม" />
+      <button class="btn-add" onclick="addTodo()">
+        <i class="ti ti-plus"></i> เพิ่ม
+      </button>
+    </div>
+
+    <div id="todo-list" class="todo-list">
+      <div class="loading">กำลังโหลด...</div>
+    </div>
   </div>
+
   <script>
     const API = 'http://localhost:3001/api';
+    let todos = [];
 
     async function fetchTodos() {
-      const res = await fetch(`${API}/todos`);
-      const data = await res.json();
-      renderTodos(data);
+      try {
+        const res = await fetch(`${API}/todos`);
+        todos = await res.json();
+        renderTodos();
+      } catch {
+        todos = [
+          { id: 1, title: 'เรียน Git', completed: true },
+          { id: 2, title: 'เรียน Docker', completed: false },
+          { id: 3, title: 'สร้าง CI/CD Pipeline', completed: false }
+        ];
+        renderTodos();
+      }
     }
 
-    function renderTodos(todos) {
+    function updateStats() {
+      const total = todos.length;
+      const done = todos.filter(t => t.completed).length;
+      const pending = total - done;
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-done').textContent = done;
+      document.getElementById('stat-pending').textContent = pending;
+      document.getElementById('progress').style.width = total ? `${(done / total) * 100}%` : '0%';
+    }
+
+    function renderTodos() {
+      updateStats();
       const list = document.getElementById('todo-list');
-      if (todos.length === 0) { list.innerHTML = '<p style="color:#999">ยังไม่มีงาน</p>'; return; }
+      if (todos.length === 0) {
+        list.innerHTML = `<div class="empty-state"><i class="ti ti-clipboard-list"></i><p>ยังไม่มีงาน เพิ่มงานใหม่ได้เลย</p></div>`;
+        return;
+      }
       list.innerHTML = todos.map(t => `
-        <div class="todo-item">
-          <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodo(${t.id})" />
-          <span class="todo-title ${t.completed ? 'done' : ''}">${t.title}</span>
-          <button class="delete-btn" onclick="deleteTodo(${t.id})">ลบ</button>
+        <div class="todo-item ${t.completed ? 'completed' : ''}" id="item-${t.id}">
+          <div class="checkbox-wrap">
+            <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodo(${t.id})" />
+          </div>
+          <span class="todo-title ${t.completed ? 'done' : ''}" id="title-${t.id}">${escHtml(t.title)}</span>
+          <div class="actions">
+            <button class="btn-icon edit" onclick="startEdit(${t.id})" title="แก้ไข"><i class="ti ti-pencil"></i></button>
+            <button class="btn-icon delete" onclick="deleteTodo(${t.id})" title="ลบ"><i class="ti ti-trash"></i></button>
+          </div>
         </div>`).join('');
+    }
+
+    function startEdit(id) {
+      const item = document.getElementById(`item-${id}`);
+      const titleEl = document.getElementById(`title-${id}`);
+      const current = titleEl.textContent;
+
+      item.innerHTML = `
+        <div class="checkbox-wrap" style="opacity:.3; pointer-events:none;">
+          <input type="checkbox" />
+        </div>
+        <input class="edit-input" id="edit-${id}" value="${escHtml(current)}" onkeydown="handleEditKey(event, ${id})" />
+        <div class="actions">
+          <button class="btn-icon save" onclick="saveEdit(${id})" title="บันทึก"><i class="ti ti-check"></i></button>
+          <button class="btn-icon cancel" onclick="renderTodos()" title="ยกเลิก"><i class="ti ti-x"></i></button>
+        </div>`;
+      document.getElementById(`edit-${id}`).focus();
+    }
+
+    function handleEditKey(e, id) {
+      if (e.key === 'Enter') saveEdit(id);
+      if (e.key === 'Escape') renderTodos();
+    }
+
+    async function saveEdit(id) {
+      const val = document.getElementById(`edit-${id}`).value.trim();
+      if (!val) return;
+      try {
+        await fetch(`${API}/todos/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: val })
+        });
+        fetchTodos();
+      } catch {
+        const t = todos.find(t => t.id === id);
+        if (t) t.title = val;
+        renderTodos();
+      }
     }
 
     async function addTodo() {
       const input = document.getElementById('new-todo');
       const title = input.value.trim();
       if (!title) return;
-      await fetch(`${API}/todos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title })
-      });
-      input.value = '';
-      fetchTodos();
+      try {
+        await fetch(`${API}/todos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title })
+        });
+        input.value = '';
+        fetchTodos();
+      } catch {
+        todos.push({ id: Date.now(), title, completed: false });
+        input.value = '';
+        renderTodos();
+      }
     }
 
     async function toggleTodo(id) {
-      await fetch(`${API}/todos/${id}`, { method: 'PATCH' });
-      fetchTodos();
+      try {
+        await fetch(`${API}/todos/${id}`, { method: 'PATCH' });
+        fetchTodos();
+      } catch {
+        const t = todos.find(t => t.id === id);
+        if (t) t.completed = !t.completed;
+        renderTodos();
+      }
     }
 
     async function deleteTodo(id) {
       if (!confirm('ลบงานนี้?')) return;
-      await fetch(`${API}/todos/${id}`, { method: 'DELETE' });
-      fetchTodos();
+      try {
+        await fetch(`${API}/todos/${id}`, { method: 'DELETE' });
+        fetchTodos();
+      } catch {
+        todos = todos.filter(t => t.id !== id);
+        renderTodos();
+      }
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
     document.getElementById('new-todo').addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
